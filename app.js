@@ -169,7 +169,7 @@ window.onFileSaved = async (path) => {
             }
         }
         
-        if (!('showSaveFilePicker' in window)) {
+        if (!('showSaveFilePicker' in window) && !filename.endsWith('.cfg')) {
             const blob = new Blob([data], { type: 'application/octet-stream' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -179,6 +179,7 @@ window.onFileSaved = async (path) => {
             URL.revokeObjectURL(url);
             console.log(`File ${path} downloaded automatically.`);
         }
+
     } catch (e) {
         console.error(`Failed to handle file save for ${path}:`, e);
     }
