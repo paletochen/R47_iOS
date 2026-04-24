@@ -6,7 +6,8 @@
 
 // Single source of truth for the web release. assemble-web.sh stamps
 // this into dist/sw.js (VERSION) and dist/index.html (softwareVersion).
-const WEB_VERSION = '4.09';
+const WEB_VERSION = '4.10';
+
 
 
 
@@ -3014,19 +3015,21 @@ if ('serviceWorker' in navigator) {
 // unless the user is already running as a PWA.
 (function promoteInstall() {
   const ua = navigator.userAgent;
-  const isIOS = /iPhone|iPad|iPod/.test(ua) && !/CriOS|FxiOS/.test(ua);
+  const isIOSPlatform = /iPhone|iPad|iPod/.test(ua);
+  const isIOS = isIOSPlatform && !/CriOS|FxiOS/.test(ua);
   const isAndroid = /Android/.test(ua);
   const isStandalone =
     window.matchMedia('(display-mode: standalone)').matches ||
     window.navigator.standalone === true;     // iOS legacy flag
 
   // Add platform classes so CSS shows the right hint text.
-  if (isIOS)     document.documentElement.classList.add('is-ios');
-  if (isAndroid) document.documentElement.classList.add('is-android');
+  if (isIOSPlatform) document.documentElement.classList.add('is-ios');
+  if (isAndroid)     document.documentElement.classList.add('is-android');
 
   if (isStandalone) return;                                    // already full-screen
   if (localStorage.getItem('r47.installDismissed') === '1') return;
   if (!isIOS && !isAndroid) return;                            // skip desktop
+
 
   const banner = document.getElementById('install-banner');
   const btn    = document.getElementById('install-btn');
