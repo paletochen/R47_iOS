@@ -754,12 +754,14 @@ window.r47RequestFile = async (kind) => {
         if (kind === 'load-state' || kind === 'load-program') {
             try {
                 const [handle] = await window.showOpenFilePicker({
+                    id: kind, // Remember directory for this kind
                     types: [{
                         description: 'R47 Files',
                         accept: { 'application/octet-stream': ['.s47', '.p47'] }
                     }],
                     multiple: false
                 });
+
                 const file = await handle.getFile();
                 const buffer = await file.arrayBuffer();
                 const data = new Uint8Array(buffer);
@@ -785,6 +787,45 @@ window.r47RequestFile = async (kind) => {
                 return false;
             }
         }
+        
+        if (kind === 'save-state' || kind === 'save-program') {
+            try {
+                const defaultName = kind === 'save-state' ? 'R47.sav' : 'program.p47';
+                const handle = await window.showSaveFilePicker({
+                    id: kind, // Remember directory for this kind
+                    suggestedName: defaultName,
+                    types: [{
+                        description: 'R47 Files',
+                        accept: { 'application/octet-stream': ['.s47', '.p47'] }
+                    }],
+                });
+                
+                const name = handle.name;
+                Module.ccall('r47_set_save_name', null, ['string'], [name]);
+                
+                if (kind === 'save-state') {
+                    await Module.ccall('r47_save_state', null, [], [], { async: true });
+                } else {
+                    await Module.ccall('r47_save_program', null, [], [], { async: true });
+                }
+                
+                const tab = kind === 'save-state' ? 'STATE' : 'PROGRAMS';
+                const path = `/persist/${tab}/${name}`;
+                const data = Module.FS.readFile(path);
+                
+                const writable = await handle.createWritable();
+                await writable.write(data);
+                await writable.close();
+                console.log('File saved successfully via JS');
+                return true;
+            } catch (err) {
+                if (err.name !== 'AbortError') {
+                    console.error('Failed to save file:', err);
+                }
+                return false;
+            }
+        }
+
 
         
         if (kind === 'snap-file') {
@@ -808,12 +849,14 @@ window.r47RequestFile = async (kind) => {
                 const data = new Uint8Array(Module.HEAPU8.buffer, ptr, size);
                 
                 const handle = await window.showSaveFilePicker({
+                    id: 'snap-file', // Remember directory for SNAP
                     suggestedName: filename,
                     types: [{
                         description: 'BMP Image',
                         accept: {'image/bmp': ['.bmp']},
                     }],
                 });
+
                 
                 const writable = await handle.createWritable();
                 await writable.write(data);
