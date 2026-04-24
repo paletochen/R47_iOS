@@ -789,24 +789,25 @@ window.r47RequestFile = async (kind) => {
             }
         }
         
-        if (kind === 'save-state' || kind === 'save-program') {
+        if (kind === 'save-state' || kind === 'save-program' || kind === 'export-rtf') {
             try {
                 let defaultName = kind === 'save-state' ? 'R47.sav' : 'program.p47';
-                if (kind === 'save-program') {
+                if (kind === 'export-rtf') defaultName = 'program.rtf';
+                
+                if (kind === 'save-program' || kind === 'export-rtf') {
                     const currentPgmNum = Module.ccall('r47_current_program_number', 'number', [], []);
                     const name = Module.ccall('r47_program_label_at', 'string', ['number'], [currentPgmNum]);
                     if (name && name !== 'untitled') {
-                        defaultName = `${name}.p47`;
+                        defaultName = `${name}.${kind === 'export-rtf' ? 'rtf' : 'p47'}`;
                     }
                 }
                 
                 const handle = await window.showSaveFilePicker({
                     id: kind, // Remember directory for this kind
                     suggestedName: defaultName,
-
                     types: [{
-                        description: 'R47 Files',
-                        accept: { 'application/octet-stream': ['.s47', '.p47'] }
+                        description: kind === 'export-rtf' ? 'RTF Document' : 'R47 Files',
+                        accept: kind === 'export-rtf' ? { 'application/rtf': ['.rtf'] } : { 'application/octet-stream': ['.s47', '.p47'] }
                     }],
                 });
                 
@@ -815,8 +816,10 @@ window.r47RequestFile = async (kind) => {
                 
                 if (kind === 'save-state') {
                     await Module.ccall('r47_save_state', null, [], [], { async: true });
-                } else {
+                } else if (kind === 'save-program') {
                     await Module.ccall('r47_save_program', null, [], [], { async: true });
+                } else if (kind === 'export-rtf') {
+                    await Module.ccall('r47_export_rtf_program_named', null, ['string'], [name], { async: true });
                 }
                 
                 const tab = kind === 'save-state' ? 'STATE' : 'PROGRAMS';
@@ -835,6 +838,7 @@ window.r47RequestFile = async (kind) => {
                 return false;
             }
         }
+
 
 
         
@@ -885,22 +889,34 @@ window.r47RequestFile = async (kind) => {
     }
 
     
-    if (kind === 'save-state' || kind === 'save-program') {
+    if (kind === 'save-state' || kind === 'save-program' || kind === 'export-rtf') {
+        let defaultName = kind === 'save-state' ? 'R47.sav' : 'program.p47';
+        if (kind === 'export-rtf') defaultName = 'program.rtf';
+        
+        if (kind === 'save-program' || kind === 'export-rtf') {
+            const currentPgmNum = Module.ccall('r47_current_program_number', 'number', [], []);
+            const name = Module.ccall('r47_program_label_at', 'string', ['number'], [currentPgmNum]);
+            if (name && name !== 'untitled') {
+                defaultName = `${name}.${kind === 'export-rtf' ? 'rtf' : 'p47'}`;
+            }
+        }
 
-
-        const defaultName = kind === 'save-state' ? 'R47.sav' : 'program.p47';
         const name = prompt("Enter filename to save:", defaultName);
         if (name) {
             Module.ccall('r47_set_save_name', null, ['string'], [name]);
             if (kind === 'save-state') {
                 Module.ccall('r47_save_state_named', null, ['string'], [name], { async: true });
-            } else {
+            } else if (kind === 'save-program') {
                 Module.ccall('r47_save_program_named', null, ['string'], [name], { async: true });
+            } else if (kind === 'export-rtf') {
+                Module.ccall('r47_export_rtf_program_named', null, ['string'], [name], { async: true });
             }
+
             return true;
         }
         return false;
     }
+
     
     if (kind === 'snap-file') {
         try {

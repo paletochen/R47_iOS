@@ -25,8 +25,8 @@ const FileBrowser = {
         <button class="fb-tab active" data-tab="PROGRAMS">PROGRAMS</button>
         <button class="fb-tab" data-tab="SAVFILES">SAVFILES</button>
         <button class="fb-tab" data-tab="STATE">STATE</button>
-        <button class="fb-tab" data-tab="SCREENS">SCREENS</button>
       </div>
+
       <div id="fb-content">
         <div id="fb-file-list"></div>
       </div>
