@@ -389,15 +389,24 @@ function initSettings() {
 
     // Close modals when clicking outside
     window.addEventListener('click', (e) => {
-        if (e.target === modal) {
+        if (e.target === modal || e.target.classList.contains('files-backdrop')) {
             modal.style.display = 'none';
             saveSettings();
         }
-        if (clipModal && e.target === clipModal) {
+        if (clipModal && (e.target === clipModal || e.target.classList.contains('theme-backdrop'))) {
             clipModal.style.display = 'none';
         }
-
     });
+
+    // Bottom close button
+    const bottomCloseBtn = document.getElementById('settings-bottom-close');
+    if (bottomCloseBtn) {
+        bottomCloseBtn.addEventListener('click', () => {
+            modal.style.display = 'none';
+            saveSettings();
+        });
+    }
+
 
     // File I/O actions
     const uploadBtn = document.getElementById('upload-file-btn');
