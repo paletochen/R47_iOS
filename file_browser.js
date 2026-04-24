@@ -4,8 +4,10 @@
 const FileBrowser = {
   currentTab: 'PROGRAMS',
   selectedFiles: new Set(),
+  operationMode: null,
 
   init() {
+
     this.createUI();
     this.bindEvents();
   },
@@ -32,8 +34,10 @@ const FileBrowser = {
         <button id="fb-upload">Upload</button>
         <button id="fb-download">Download</button>
         <button id="fb-delete">Delete</button>
+        <button id="fb-apply" style="display:none;">Load into Calc</button>
         <input type="file" id="fb-file-input" hidden>
       </div>
+
     `;
     document.body.appendChild(container);
   },
@@ -61,12 +65,53 @@ const FileBrowser = {
 
     document.getElementById('fb-download').addEventListener('click', () => this.handleDownload());
     document.getElementById('fb-delete').addEventListener('click', () => this.handleDelete());
+    document.getElementById('fb-apply').addEventListener('click', () => this.handleApply());
   },
+
+  handleApply() {
+    if (this.selectedFiles.size !== 1) {
+        alert("Please select exactly one file.");
+        return;
+    }
+    const selectedFile = Array.from(this.selectedFiles)[0];
+    const filename = selectedFile;
+    
+    console.log("Applying file to engine:", filename, "for mode:", this.operationMode);
+    
+    if (this.operationMode === 'load-program') {
+        Module.ccall('r47_load_program_named', null, ['string'], [filename], { async: true });
+    } else if (this.operationMode === 'load-state') {
+        Module.ccall('r47_load_state_named', null, ['string'], [filename], { async: true });
+    } else if (this.operationMode === 'load-savfile') {
+        Module.ccall('r47_load_savfile_named', null, ['string'], [filename], { async: true });
+    }
+    
+    this.hide();
+    this.operationMode = null; // Reset
+  },
+
 
   show() {
     document.getElementById('file-browser').classList.add('show');
+    
+    const applyBtn = document.getElementById('fb-apply');
+    if (this.operationMode) {
+        applyBtn.style.display = 'inline-block';
+        // Disable tabs to prevent switching when engine requested a specific type
+        document.querySelectorAll('.fb-tab').forEach(t => t.style.pointerEvents = 'none');
+        // Highlight requested tab
+        document.querySelectorAll('.fb-tab').forEach(t => {
+            t.classList.remove('active');
+            if (t.dataset.tab === this.currentTab) t.classList.add('active');
+        });
+    } else {
+        applyBtn.style.display = 'none';
+        document.querySelectorAll('.fb-tab').forEach(t => t.style.pointerEvents = 'auto');
+    }
+    
     this.refreshList();
   },
+
   hide() {
     document.getElementById('file-browser').classList.remove('show');
   },

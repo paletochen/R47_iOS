@@ -744,7 +744,95 @@ function performHapticClick() {
     }
 }
 
+window.r47RequestFile = async (kind) => {
+    console.log("window.r47RequestFile called with kind:", kind);
+    
+    // If native file picker is supported, use it instead of the internal browser
+    if ('showSaveFilePicker' in window) {
+        console.log("Native file picker supported, using it for kind:", kind);
+        
+        if (kind === 'load-state' || kind === 'load-program') {
+            // ... existing load handling ...
+        }
+        
+        if (kind === 'snap-file') {
+            try {
+                const now = new Date();
+                const timestamp = now.toISOString().replace(/T/, '_').replace(/\..+/, '').replace(/:/g, '-');
+                const filename = `SNAP_${timestamp}.bmp`;
+                
+                // Trigger screen dump in core to populate buffer
+                Module.ccall('r47_snap_named', null, ['string'], [filename], { async: true });
+                
+                // Get buffer pointer and size from WASM
+                const ptr = Module._getSnapBufferPtr();
+                const size = Module._getSnapBufferSize();
+                
+                if (ptr === 0 || size === 0) {
+                    console.error('Failed to get SNAP data from WASM');
+                    return false;
+                }
+                
+                const data = new Uint8Array(Module.HEAPU8.buffer, ptr, size);
+                
+                const handle = await window.showSaveFilePicker({
+                    suggestedName: filename,
+                    types: [{
+                        description: 'BMP Image',
+                        accept: {'image/bmp': ['.bmp']},
+                    }],
+                });
+                
+                const writable = await handle.createWritable();
+                await writable.write(data);
+                await writable.close();
+                console.log('SNAP file saved successfully via JS');
+                return true;
+            } catch (err) {
+                if (err.name !== 'AbortError') {
+                    console.error('Failed to save SNAP file:', err);
+                }
+                return false;
+            }
+        }
+        
+        return false;
+    }
+
+    
+    if (kind === 'save-state' || kind === 'save-program') {
+
+
+        const defaultName = kind === 'save-state' ? 'R47.sav' : 'program.p47';
+        const name = prompt("Enter filename to save:", defaultName);
+        if (name) {
+            Module.ccall('r47_set_save_name', null, ['string'], [name]);
+            if (kind === 'save-state') {
+                Module.ccall('r47_save_state_named', null, ['string'], [name], { async: true });
+            } else {
+                Module.ccall('r47_save_program_named', null, ['string'], [name], { async: true });
+            }
+            return true;
+        }
+        return false;
+    }
+    
+    let tab = 'PROGRAMS';
+    if (kind === 'load-state') tab = 'STATE';
+    if (kind === 'load-savfile') tab = 'SAVFILES';
+    
+    if (window.fileBrowser) {
+        window.fileBrowser.currentTab = tab;
+        window.fileBrowser.operationMode = kind;
+        window.fileBrowser.show();
+    } else {
+        console.error("fileBrowser is not initialized!");
+    }
+};
+
+
 function updateAlphaLabels() {
+
     const isAlpha = false; // Mocked as false because isAlphaMode is not exported
 
     const buttons = document.querySelectorAll('.btn');
