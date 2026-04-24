@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>R47 Web Calculator</title>
+  <meta name="viewport"
+        content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+
+  <!-- ===== SEO ===== -->
+  <meta name="description" content="R47 Web Calculator — an in-browser RPN scientific and programmable calculator. Full feature parity with the C47 / R47 firmware: 47-digit precision, matrices, statistics, complex numbers, programs, and 600+ functions. Inspired by the HP-42S and Swiss Micros DM42. Works offline as an installable PWA on iPhone, Android, and desktop.">
+  <meta name="keywords" content="C47, C47 web, C47 calculator, R47, R47 web, R47 calculator, RPN calculator, scientific calculator, programmable calculator, HP-42S emulator, DM42 emulator, Swiss Micros DM42, browser calculator, web calculator, WebAssembly calculator, PWA calculator, iPhone calculator, Android calculator, decNumber, 47 digit precision">
+  <meta name="author" content="The C47 / R47 / WP43 Authors">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://r47.dansbeesllc.com/">
+
+  <!-- Open Graph (Facebook, LinkedIn, Slack, etc.) -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://r47.dansbeesllc.com/">
+  <meta property="og:title" content="C47 Web Calculator">
+  <meta property="og:description" content="An in-browser RPN scientific and programmable calculator inspired by the HP-42S / Swiss Micros DM42. 47-digit precision, matrices, statistics, programs, 600+ functions. Installs as a PWA.">
+  <meta property="og:image" content="https://r47.dansbeesllc.com/static/icons/icon-512.png">
+  <meta property="og:image:width" content="512">
+  <meta property="og:image:height" content="512">
+  <meta property="og:site_name" content="C47 Web Calculator">
+
+  <!-- Twitter / X -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="C47 Web Calculator">
+  <meta name="twitter:description" content="An in-browser RPN scientific and programmable calculator. HP-42S / DM42 inspired, 47-digit precision, 600+ functions, PWA installable.">
+  <meta name="twitter:image" content="https://r47.dansbeesllc.com/static/icons/icon-512.png">
+
+  <!-- Schema.org structured data for rich results -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "C47 Web Calculator",
+    "alternateName": ["C47", "C47 Web", "R47", "R47 Web"],
+    "applicationCategory": "UtilityApplication",
+    "applicationSubCategory": "Calculator",
+    "operatingSystem": "Any (modern web browser)",
+    "url": "https://r47.dansbeesllc.com/",
+    "image": "https://r47.dansbeesllc.com/static/icons/icon-512.png",
+    "description": "An in-browser RPN scientific and programmable calculator. 47-digit precision, matrices, statistics, complex numbers, programs, and 600+ functions. Inspired by the HP-42S and Swiss Micros DM42. Works offline as an installable PWA.",
+    "browserRequirements": "Requires JavaScript and WebAssembly support",
+    "softwareVersion": "1.81"
+  }
+  </script>
+
+  <!-- ===== PWA / mobile ===== -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="R47">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#2B2A29">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="static/icons/icon-192.png">
+  <link rel="icon" type="image/png" href="static/icons/icon-32.png" sizes="32x32">
+
+  <!-- Preload the C47 fonts so they're ready before the first paint. -->
+  <link rel="preload" as="font" type="font/ttf" crossorigin
+        href="static/fonts/C47__StandardFont.ttf">
+  <link rel="preload" as="font" type="font/ttf" crossorigin
+        href="static/fonts/C47__NumericFont.ttf">
+  <link rel="stylesheet" href="main.css">
+</head>
+<body>
+  <h1 class="sr-only">R47 Web Calculator</h1>
+  <p class="sr-only">
+    C47 Web Calculator is an in-browser implementation of the C47 / R47 RPN
+    scientific calculator firmware, inspired by the Hewlett-Packard HP-42S
+    and the Swiss Micros DM42. It supports 47-digit decimal precision,
+    matrices, statistics, complex numbers, integer modes, programs, and
+    over 600 built-in functions. No accounts, no telemetry, no ads — runs
+    entirely in your browser via WebAssembly and persists state locally.
+    Installable as a Progressive Web App on iPhone, iPad, Android, macOS,
+    Windows, and Linux for full offline use.
+  </p>
+  <div id="install-banner" hidden>
+    <div class="install-inner">
+      <span class="install-text">Add to Home Screen for full-screen mode</span>
+      <span class="install-hint" data-ios>Share → Add to Home Screen</span>
+      <span class="install-hint" data-android>Menu (⋮) → Add to Home screen</span>
+      <button type="button" id="install-btn" hidden>Install</button>
+      <button type="button" id="install-dismiss" aria-label="Dismiss">&times;</button>
+    </div>
+  </div>
+  <div id="device">
+    <img id="skin" src="static/skin/R47.png" alt="" draggable="false">
+    <!-- Themed rectangle that covers the 5-px top/left/right body strips
+         around the LCD so they track the LCD theme color instead of the
+         body color baked into the skin PNG. The canvas sits on top at
+         (5,5) inside this 482x299 frame. -->
+    <div id="lcd-frame"></div>
+    <canvas id="lcd" width="400" height="240"></canvas>
+    <div id="keys"></div>
+    <div id="printer" hidden>
+      <div id="printer-head">
+        <span>Printer Tape</span>
+        <button type="button" id="printer-clear">Clear</button>
+        <button type="button" id="printer-dl-txt">.txt</button>
+        <button type="button" id="printer-dl-rtf">.rtf</button>
+        <button type="button" id="printer-close" aria-label="Close">&times;</button>
+      </div>
+      <pre id="printer-tape"></pre>
+    </div>
+    <!-- Toolbar buttons removed as requested -->
+  </div>
+
+  <div id="files-modal" hidden>
+    <div class="files-backdrop"></div>
+    <div class="files-panel">
+      <div class="files-head">
+        <span>Files</span>
+        <button type="button" id="files-close" aria-label="Close">&times;</button>
+      </div>
+      <div class="files-tabs" role="tablist">
+        <button type="button" class="files-tab" data-kind="programs" role="tab" aria-selected="true">Programs</button>
+        <button type="button" class="files-tab" data-kind="states"   role="tab">States</button>
+        <button type="button" class="files-tab" data-kind="exports"  role="tab">Exports</button>
+        <button type="button" class="files-tab" data-kind="backup"   role="tab">Backup</button>
+      </div>
+      <div class="files-list" id="files-list" role="tabpanel"><!-- populated by shell.js --></div>
+      <div class="files-actions" id="files-actions">
+        <button type="button" id="files-save-new"   class="files-action-btn">+ Save current</button>
+        <button type="button" id="files-import"     class="files-action-btn" title="Upload a file from your device">Upload&hellip;</button>
+        <button type="button" id="files-export-rtf" class="files-action-btn">Export RTF</button>
+        <button type="button" id="files-sync-screenshots" class="files-action-btn">Sync Engine Screenshots</button>
+        <button type="button" id="files-backup-dl" class="files-action-btn" hidden>Download ZIP</button>
+        <button type="button" id="files-backup-import" class="files-action-btn" hidden title="Restore a previously-downloaded backup ZIP">Restore&hellip;</button>
+      </div>
+      <input type="file" id="files-import-input" hidden accept=".p47,.s47,.sav,.rtf,.txt,.zip">
+    </div>
+  </div>
+
+  <div id="preview-modal" hidden>
+    <div class="files-backdrop"></div>
+    <div class="preview-panel">
+      <div class="files-head">
+        <span id="preview-title">Preview</span>
+        <button type="button" id="preview-close" aria-label="Close">&times;</button>
+      </div>
+      <pre id="preview-body"></pre>
+      <div class="files-actions">
+        <button type="button" id="preview-download" class="files-action-btn">Download</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="name-modal" hidden>
+    <div class="files-backdrop"></div>
+    <div class="name-panel">
+      <div class="files-head">
+        <span id="name-title">Save as</span>
+        <button type="button" id="name-close" aria-label="Close">&times;</button>
+      </div>
+      <form id="name-form" class="name-form">
+        <input type="text" id="name-input" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="80" placeholder="filename">
+        <div class="name-hint" id="name-hint">extension will be added automatically</div>
+        <div class="name-buttons">
+          <button type="button" id="name-cancel" class="name-btn">Cancel</button>
+          <button type="submit" id="name-ok" class="name-btn name-btn-primary">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="theme-modal" hidden>
+    <div class="theme-backdrop"></div>
+    <div class="theme-panel">
+      <div class="theme-head">
+        <span id="theme-title">Choose a theme</span>
+        <button type="button" id="theme-close" aria-label="Close">&times;</button>
+      </div>
+      <div class="theme-controls" id="theme-controls" hidden>
+        <label class="theme-toggle" for="theme-lcd-smooth">
+          <input type="checkbox" id="theme-lcd-smooth" checked>
+          <span>Smooth Font</span>
+        </label>
+        <label class="theme-toggle" for="theme-fill-screen">
+          <input type="checkbox" id="theme-fill-screen">
+          <span>Fill screen</span>
+        </label>
+      </div>
+      <div class="theme-controls" id="theme-controls-keys" hidden>
+        <label class="theme-toggle" for="theme-haptic">
+          <input type="checkbox" id="theme-haptic" checked>
+          <span>Haptic feedback</span>
+        </label>
+      </div>
+      <div class="theme-grid" id="theme-grid"><!-- populated by shell.js --></div>
+    </div>
+  </div>
+
+  <div id="snackbar">
+    <span>Please select a Work Directory for organized storage!</span>
+    <button id="snackbar-action-btn">SET</button>
+  </div>
+
+  <div id="settings-modal" hidden>
+    <div class="files-backdrop"></div>
+    <div class="settings-panel">
+      <div class="files-head">
+        <span>Settings</span>
+        <button type="button" id="settings-close" aria-label="Close">&times;</button>
+      </div>
+      <div class="settings-body">
+        <div class="settings-row">
+          <label for="haptic-enabled">Enable Haptic feedback</label>
+          <input type="checkbox" id="haptic-enabled" checked>
+        </div>
+        <div class="settings-row">
+          <label for="haptic-hifi">High-Fidelity Haptics (Modern)</label>
+          <input type="checkbox" id="haptic-hifi" checked>
+        </div>
+        <div class="settings-row">
+          <label for="haptic-intensity">Haptic intensity</label>
+          <input type="range" id="haptic-intensity" min="0" max="255" value="180">
+        </div>
+        <div class="settings-row">
+          <label for="keep-screen-on">Keep Screen On</label>
+          <input type="checkbox" id="keep-screen-on">
+        </div>
+        <div class="settings-row">
+          <label for="force-close-exit">Force Close on f-shift EXIT</label>
+          <input type="checkbox" id="force-close-exit">
+        </div>
+        <div class="settings-row">
+          <label>Work Directory</label>
+          <div class="work-dir-controls">
+            <button type="button" id="work-directory-btn">Select Folder</button>
+            <span id="work-directory-status">Not selected</span>
+          </div>
+        </div>
+        <div class="settings-row">
+          <button type="button" id="factory-reset-btn" class="danger-btn">Reset to Factory Defaults</button>
+        </div>
+        
+        <h3>Audio Settings</h3>
+        <div class="settings-row">
+          <label for="beeper-enabled">Simulated Beeper</label>
+          <input type="checkbox" id="beeper-enabled" checked>
+        </div>
+        <div class="settings-row">
+          <label for="beeper-volume">Beeper Volume</label>
+          <input type="range" id="beeper-volume" min="0" max="100" value="20">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dual-binary shim selector (see docsmd/firmwarekeys.md §5).
+       First-time visitors get R47 by default; returning users get whichever
+       family they last switched to via the KEYS menu. ?reset in the URL
+       clears the selection so a linkable recovery URL always boots R47.
+
+       Both scripts are injected dynamically with async=false so they
+       execute in insertion order: c47-web-* defines R47Module, then
+       shell.js uses it. Static <script> tags don't give us that
+       guarantee when only one of them is swapped out, so we inject
+       both. If the selected binary 404s (bad deploy, stale cache),
+       the onerror handler clears r47-target and shows a recovery link. -->
+  <script>
+    (function() {
+      let target = 'r47';
+      try {
+        const t = JSON.parse(localStorage.getItem('r47-target') || '{}');
+        if (t && t.binary === 'c47') target = 'c47';
+      } catch (_) { /* corrupt JSON → default R47 */ }
+      if (/(^|[?&])reset(&|=|$)/.test(location.search)) {
+        try { localStorage.removeItem('r47-target'); } catch (_) {}
+        target = 'r47';
+      }
+
+      function inject(src, onerror) {
+        const s = document.createElement('script');
+        s.src = src;
+        s.async = false;             // preserve insertion-order execution
+        if (onerror) s.onerror = onerror;
+        document.head.appendChild(s);
+        return s;
+      }
+
+      let filename = 'c47-web-' + target + '-debug.js';
+      const targetIsR47 = (target === 'r47' || (parseInt(target) >= 61 && parseInt(target) <= 64));
+      if (targetIsR47) filename = 'r47.js';
+      inject('wasm/' + filename, function() {
+
+        // Selected firmware binary failed to load — user-visible recovery.
+        try { localStorage.removeItem('r47-target'); } catch (_) {}
+        document.body.innerHTML =
+          '<p style="padding:2em;font-family:sans-serif">' +
+          'Could not load the selected calculator binary. ' +
+          '<a href="?reset">Reset to default (R47)</a>.</p>';
+      });
+      inject('shell.js?v=' + new Date().getTime());
+      inject('app.js?v=' + new Date().getTime());
+
+
+    })();
+  </script>
+</body>
+</html>
