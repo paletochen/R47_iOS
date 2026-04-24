@@ -13,8 +13,8 @@ const FileBrowser = {
   createUI() {
     const container = document.createElement('div');
     container.id = 'file-browser';
-    container.hidden = true;
     container.innerHTML = `
+
       <div id="fb-header">
         <span>Manage Calculator Storage</span>
         <button id="fb-close">&times;</button>
