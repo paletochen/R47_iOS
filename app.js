@@ -849,6 +849,43 @@ window.r47RequestFile = async (kind) => {
         return false;
     }
     
+    if (kind === 'snap-file') {
+        try {
+            const now = new Date();
+            const timestamp = now.toISOString().replace(/T/, '_').replace(/\..+/, '').replace(/:/g, '-');
+            const filename = `SNAP_${timestamp}.bmp`;
+            
+            // Trigger screen dump in core to populate buffer
+            Module.ccall('r47_snap_named', null, ['string'], [filename], { async: true });
+            
+            // Get buffer pointer and size from WASM
+            const ptr = Module._getSnapBufferPtr();
+            const size = Module._getSnapBufferSize();
+            
+            if (ptr === 0 || size === 0) {
+                console.error('Failed to get SNAP data from WASM');
+                alert("Failed to get snapshot data.");
+                return false;
+            }
+            
+            const data = new Uint8Array(Module.HEAPU8.buffer, ptr, size);
+            const blob = new Blob([data], { type: 'image/bmp' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
+            console.log('SNAP file downloaded successfully');
+            return true;
+        } catch (err) {
+            console.error('Failed to handle SNAP file:', err);
+            alert("Failed to save snapshot.");
+            return false;
+        }
+    }
+    
     let tab = 'PROGRAMS';
     if (kind === 'load-state') tab = 'STATE';
     if (kind === 'load-savfile') tab = 'SAVFILES';
@@ -861,6 +898,7 @@ window.r47RequestFile = async (kind) => {
         console.error("FileBrowser is not initialized!");
     }
 };
+
 
 
 
