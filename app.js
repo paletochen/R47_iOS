@@ -752,8 +752,40 @@ window.r47RequestFile = async (kind) => {
         console.log("Native file picker supported, using it for kind:", kind);
         
         if (kind === 'load-state' || kind === 'load-program') {
-            // ... existing load handling ...
+            try {
+                const [handle] = await window.showOpenFilePicker({
+                    types: [{
+                        description: 'R47 Files',
+                        accept: { 'application/octet-stream': ['.s47', '.p47'] }
+                    }],
+                    multiple: false
+                });
+                const file = await handle.getFile();
+                const buffer = await file.arrayBuffer();
+                const data = new Uint8Array(buffer);
+                const path = `/persist/uploads/${file.name}`;
+                
+                try {
+                    Module.FS.mkdir('/persist/uploads');
+                } catch (e) { /* ignore if exists */ }
+                
+                Module.FS.writeFile(path, data);
+                Module.ccall('r47_stage_upload', null, ['string'], [path]);
+                
+                if (kind === 'load-state') {
+                    Module.ccall('r47_load_state_named', null, ['string'], [file.name], { async: true });
+                } else {
+                    Module.ccall('r47_load_program_named', null, ['string'], [file.name], { async: true });
+                }
+                return true;
+            } catch (err) {
+                if (err.name !== 'AbortError') {
+                    console.error('Failed to pick file:', err);
+                }
+                return false;
+            }
         }
+
         
         if (kind === 'snap-file') {
             try {
@@ -821,14 +853,15 @@ window.r47RequestFile = async (kind) => {
     if (kind === 'load-state') tab = 'STATE';
     if (kind === 'load-savfile') tab = 'SAVFILES';
     
-    if (window.fileBrowser) {
-        window.fileBrowser.currentTab = tab;
-        window.fileBrowser.operationMode = kind;
-        window.fileBrowser.show();
+    if (window.FileBrowser) {
+        window.FileBrowser.currentTab = tab;
+        window.FileBrowser.operationMode = kind;
+        window.FileBrowser.show();
     } else {
-        console.error("fileBrowser is not initialized!");
+        console.error("FileBrowser is not initialized!");
     }
 };
+
 
 
 function updateAlphaLabels() {
