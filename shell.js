@@ -6,7 +6,8 @@
 
 // Single source of truth for the web release. assemble-web.sh stamps
 // this into dist/sw.js (VERSION) and dist/index.html (softwareVersion).
-const WEB_VERSION = '3.95';
+const WEB_VERSION = '3.96';
+
 
 
 
@@ -1048,6 +1049,22 @@ async function boot() {
       }
     }
   }
+
+  // iOS specific UI adjustments
+  if (!('showSaveFilePicker' in window)) {
+    const workDirRow = document.getElementById('settings-work-dir-row');
+    const iosStorageRow = document.getElementById('settings-ios-storage-row');
+    if (workDirRow) workDirRow.hidden = true;
+    if (iosStorageRow) iosStorageRow.hidden = false;
+    
+    const openBtn = document.getElementById('fb-open-btn');
+    if (openBtn) {
+      openBtn.onclick = () => {
+        if (window.FileBrowser) window.FileBrowser.show();
+      };
+    }
+  }
+
 
 
 function showSnackbar(message, actionText, actionCallback) {

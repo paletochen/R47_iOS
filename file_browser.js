@@ -64,13 +64,13 @@ const FileBrowser = {
   },
 
   show() {
-    document.getElementById('file-browser').hidden = false;
+    document.getElementById('file-browser').classList.add('show');
     this.refreshList();
   },
-
   hide() {
-    document.getElementById('file-browser').hidden = true;
+    document.getElementById('file-browser').classList.remove('show');
   },
+
 
   refreshList() {
     const listEl = document.getElementById('fb-file-list');
