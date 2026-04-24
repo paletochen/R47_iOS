@@ -377,6 +377,7 @@ html[data-keys-theme="cde"] {
 html, body {
   margin: 0;
   padding: 0;
+  padding-top: env(safe-area-inset-top, 0);
   width: 100%;
   height: 100%;
   background: var(--bg);
@@ -391,6 +392,7 @@ html, body {
   user-select: none;
   -webkit-tap-highlight-color: transparent;
 }
+
 
 /* #device holds the calculator at its native 526x980 dimensions. We
    position it absolutely so fitScale() can center it via left/top
@@ -1106,8 +1108,8 @@ html.is-android #install-banner .install-hint[data-android] { display: inline; }
 }
 #preview-close { background: transparent; border: 0; color: var(--popup-muted); font-size: 22px; line-height: 1; cursor: pointer; padding: 0 4px; }
 
-/* ---------- Files picker modal (Programs / States) ---------- */
-#files-modal, #name-modal {
+/* Files picker modal (Programs / States) */
+#files-modal, #name-modal, #settings-modal {
   position: fixed;
   inset: 0;
   z-index: 40;
@@ -1115,7 +1117,9 @@ html.is-android #install-banner .install-hint[data-android] { display: inline; }
   align-items: center;
   justify-content: center;
 }
-#files-modal[hidden], #name-modal[hidden] { display: none; }
+
+#files-modal[hidden], #name-modal[hidden], #settings-modal[hidden] { display: none; }
+
 .files-backdrop {
   position: absolute;
   inset: 0;
@@ -1437,13 +1441,21 @@ html[data-switching="1"] #device { pointer-events: none; }
 }
 
 /* Settings Modal styles */
+html.is-ios #settings-work-dir-row { display: none !important; }
+html.is-ios #settings-ios-storage-row { display: flex !important; }
+
+html:not(.is-ios) #settings-work-dir-row { display: flex !important; }
+html:not(.is-ios) #settings-ios-storage-row { display: none !important; }
+
 #settings-modal .settings-panel {
+
   position: relative;
   background: var(--popup-panel);
   color: var(--popup-text);
   border: 1px solid var(--popup-border);
   border-radius: 28px; /* Material 3 style for dialogs */
   width: min(90vw, 400px);
+  max-height: 82vh;
   display: flex;
   flex-direction: column;
   box-shadow: 0 12px 32px rgba(0,0,0,0.5);
@@ -1457,7 +1469,10 @@ html[data-switching="1"] #device { pointer-events: none; }
   display: flex;
   flex-direction: column;
   gap: 16px;
+  overflow-y: auto;
+  flex: 1;
 }
+
 
 .settings-row {
   display: flex;

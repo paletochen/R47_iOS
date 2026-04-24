@@ -368,9 +368,10 @@ function initSettings() {
         
         if (canvasY < 30) {
             // Top area (first 30px): Settings menu!
-            modal.style.display = 'block';
+            modal.style.display = 'flex';
             loadSettings();
         } else {
+
             // Rest of the screen: Clipboard menu!
             const clipModal = document.getElementById('clipboard-modal');
             clipModal.style.display = 'block';
@@ -790,10 +791,19 @@ window.r47RequestFile = async (kind) => {
         
         if (kind === 'save-state' || kind === 'save-program') {
             try {
-                const defaultName = kind === 'save-state' ? 'R47.sav' : 'program.p47';
+                let defaultName = kind === 'save-state' ? 'R47.sav' : 'program.p47';
+                if (kind === 'save-program') {
+                    const currentPgmNum = Module.ccall('r47_current_program_number', 'number', [], []);
+                    const name = Module.ccall('r47_program_label_at', 'string', ['number'], [currentPgmNum]);
+                    if (name && name !== 'untitled') {
+                        defaultName = `${name}.p47`;
+                    }
+                }
+                
                 const handle = await window.showSaveFilePicker({
                     id: kind, // Remember directory for this kind
                     suggestedName: defaultName,
+
                     types: [{
                         description: 'R47 Files',
                         accept: { 'application/octet-stream': ['.s47', '.p47'] }
