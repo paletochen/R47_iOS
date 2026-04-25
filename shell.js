@@ -449,6 +449,8 @@ function fitScale() {
   let fillScreen = false;
   try { fillScreen = localStorage.getItem('r47-fill-screen') === '1'; } catch (_) {}
   const phoneFill = phoneLikePortrait && fillScreen;
+  // In safe mode, force a gap at the top to clear camera, even if height limited.
+  const forcedTopGap = 50;
   const safeTop    = phoneFill ? 0 : (phoneLikePortrait ? Math.max(0, rawSafeTop - 5 * (vw / W)) : rawSafeTop);
   const safeBottom = phoneFill ? 0 : getSafeAreaInset('bottom');
   const safeH = Math.max(1, vh - safeTop - safeBottom);
