@@ -7,10 +7,11 @@ const FileBrowser = {
   operationMode: null,
 
   init() {
-
+    console.log("[R47 fb] FileBrowser init called");
     this.createUI();
     this.bindEvents();
   },
+
 
   createUI() {
     const container = document.createElement('div');

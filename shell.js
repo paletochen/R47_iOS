@@ -6,7 +6,9 @@
 
 // Single source of truth for the web release. assemble-web.sh stamps
 // this into dist/sw.js (VERSION) and dist/index.html (softwareVersion).
-const WEB_VERSION = '4.18';
+const WEB_VERSION = '4.20';
+
+
 
 
 
@@ -2165,24 +2167,12 @@ if ('showDirectoryPicker' in window) {
     try { localStorage.setItem(FILL_SCREEN_KEY, fillScreen ? '1' : '0'); } catch (_) {}
     fitScale();
   });
-  const HAPTIC_KEY = 'r47-haptic';
-  const hapticInput = document.getElementById('theme-haptic');
   const hapticSupported = typeof navigator.vibrate === 'function';
-  let hapticEnabled = true;
-  if (hapticSupported && hapticInput) {
-    try {
-      const stored = localStorage.getItem(HAPTIC_KEY);
-      if (stored !== null) hapticEnabled = stored === '1';
-    } catch (_) {}
-    hapticInput.checked = hapticEnabled;
-    hapticInput.addEventListener('change', () => {
-      hapticEnabled = hapticInput.checked;
-      try { localStorage.setItem(HAPTIC_KEY, hapticEnabled ? '1' : '0'); } catch (_) {}
-    });
-  } else {
-    hapticEnabled = false;
-    if (hapticInput) hapticInput.closest('label')?.setAttribute('hidden', '');
+  const hapticInput = document.getElementById('theme-haptic');
+  if (!hapticSupported && hapticInput) {
+    hapticInput.closest('label')?.setAttribute('hidden', '');
   }
+
   function buildThemeGrid(target) {
     const current = target === 'lcd' ? currentLcdTheme : currentKeysTheme;
     themeTitle.textContent = target === 'lcd' ? 'Choose an LCD theme' : 'Choose a keys theme';

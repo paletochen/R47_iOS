@@ -637,7 +637,9 @@ function initSettings() {
     }
 
     async function applySettings() {
+        console.log("[R47 app] applySettings called");
         if (!window.audioCtx) {
+
             window.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         }
         if (window.audioCtx.state === 'suspended') {
@@ -969,10 +971,12 @@ window.r47RequestFile = async (kind) => {
     if (kind === 'load-savfile') tab = 'SAVFILES';
     
     if (window.FileBrowser) {
+        console.log("[R47 app] FileBrowser state before show:", window.FileBrowser);
         window.FileBrowser.currentTab = tab;
         window.FileBrowser.operationMode = kind;
         window.FileBrowser.show();
     } else {
+
         console.error("FileBrowser is not initialized!");
     }
 };
