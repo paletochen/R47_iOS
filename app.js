@@ -752,11 +752,14 @@ window.r47RequestFile = async (kind) => {
     if ('showSaveFilePicker' in window) {
         console.log("Native file picker supported, using it for kind:", kind);
         
-        if (kind === 'load-state' || kind === 'load-program') {
-            try {
+                const subfolder = kind === 'load-state' ? 'STATE' : 'PROGRAMS';
+                const startInHandle = await window.getSubfolderHandle(subfolder);
+                
                 const [handle] = await window.showOpenFilePicker({
-                    id: kind, // Remember directory for this kind
+                    id: subfolder,
+                    startIn: startInHandle,
                     types: [{
+
                         description: 'R47 Files',
                         accept: { 'application/octet-stream': ['.s47', '.p47'] }
                     }],
@@ -802,9 +805,14 @@ window.r47RequestFile = async (kind) => {
                     }
                 }
                 
+                const subfolder = kind === 'save-state' ? 'STATE' : 'PROGRAMS';
+                const startInHandle = await window.getSubfolderHandle(subfolder);
+                
                 const handle = await window.showSaveFilePicker({
-                    id: kind === 'save-state' ? 'STATE' : 'PROGRAMS', // Remember directory for this kind
+                    id: subfolder,
+                    startIn: startInHandle,
                     suggestedName: defaultName,
+
 
                     types: [{
                         description: kind === 'export-rtf' ? 'RTF Document' : 'R47 Files',
