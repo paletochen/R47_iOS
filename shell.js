@@ -6,7 +6,8 @@
 
 // Single source of truth for the web release. assemble-web.sh stamps
 // this into dist/sw.js (VERSION) and dist/index.html (softwareVersion).
-const WEB_VERSION = '4.17';
+const WEB_VERSION = '4.18';
+
 
 
 
@@ -455,9 +456,15 @@ function fitScale() {
   let fillScreen = false;
   try { fillScreen = localStorage.getItem('r47-fill-screen') === '1'; } catch (_) {}
   const phoneFill = phoneLikePortrait && fillScreen;
+  
+  // In safe mode, force a gap at the top to clear camera, even if height limited.
+  const forcedTopGap = 50;
   const safeTop    = phoneFill ? 0 : (phoneLikePortrait ? Math.max(0, rawSafeTop - 5 * (vw / W)) : rawSafeTop);
   const safeBottom = phoneFill ? 0 : getSafeAreaInset('bottom');
-  const safeH = Math.max(1, vh - safeTop - safeBottom);
+  
+  const baseSafeH = Math.max(1, vh - safeTop - safeBottom);
+  const safeH = phoneFill ? baseSafeH : Math.max(1, baseSafeH - forcedTopGap);
+  const topMargin = phoneFill ? 0 : forcedTopGap;
 
   const fitW = (phoneLikePortrait ? vw : safeW) / W;
   const fitH = safeH / H;
@@ -466,8 +473,9 @@ function fitScale() {
   // Fill screen: center vertically in the full viewport.
   // Safe mode: pin to the bottom of the safe area to leave gap at top.
   const centerX = phoneLikePortrait ? (vw / 2) : (safeLeft + safeW / 2);
-  const topEdge = phoneFill ? Math.max(0, (vh - H * s) / 2 + 12) : (safeTop + (safeH - H * s));
+  const topEdge = phoneFill ? Math.max(0, (vh - H * s) / 2 + 12) : (safeTop + topMargin + (safeH - H * s));
   const centerY = topEdge + (H * s) / 2;
+
 
 
 
