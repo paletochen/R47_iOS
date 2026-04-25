@@ -803,8 +803,9 @@ window.r47RequestFile = async (kind) => {
                 }
                 
                 const handle = await window.showSaveFilePicker({
-                    id: kind, // Remember directory for this kind
+                    id: kind === 'save-state' ? 'STATE' : 'PROGRAMS', // Remember directory for this kind
                     suggestedName: defaultName,
+
                     types: [{
                         description: kind === 'export-rtf' ? 'RTF Document' : 'R47 Files',
                         accept: kind === 'export-rtf' ? { 'application/rtf': ['.rtf'] } : { 'application/octet-stream': ['.s47', '.p47'] }
