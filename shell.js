@@ -6,14 +6,7 @@
 
 // Single source of truth for the web release. assemble-web.sh stamps
 // this into dist/sw.js (VERSION) and dist/index.html (softwareVersion).
-const WEB_VERSION = '4.20';
-
-
-
-
-
-
-
+const WEB_VERSION = '4.13';
 
 
 
@@ -458,28 +451,19 @@ function fitScale() {
   let fillScreen = false;
   try { fillScreen = localStorage.getItem('r47-fill-screen') === '1'; } catch (_) {}
   const phoneFill = phoneLikePortrait && fillScreen;
-  
-  // In safe mode, force a gap at the top to clear camera, even if height limited.
-  const forcedTopGap = 50;
   const safeTop    = phoneFill ? 0 : (phoneLikePortrait ? Math.max(0, rawSafeTop - 5 * (vw / W)) : rawSafeTop);
   const safeBottom = phoneFill ? 0 : getSafeAreaInset('bottom');
-  
-  const baseSafeH = Math.max(1, vh - safeTop - safeBottom);
-  const safeH = phoneFill ? baseSafeH : Math.max(1, baseSafeH - forcedTopGap);
-  const topMargin = phoneFill ? 0 : forcedTopGap;
+  const safeH = Math.max(1, vh - safeTop - safeBottom);
 
   const fitW = (phoneLikePortrait ? vw : safeW) / W;
   const fitH = safeH / H;
   const s = Math.min(fitW, fitH);
 
   // Fill screen: center vertically in the full viewport.
-  // Safe mode: pin to the bottom of the safe area to leave gap at top.
+  // Safe mode: pin the top edge at safeTop.
   const centerX = phoneLikePortrait ? (vw / 2) : (safeLeft + safeW / 2);
-  const topEdge = phoneFill ? Math.max(0, (vh - H * s) / 2 + 12) : (safeTop + topMargin + (safeH - H * s));
+  const topEdge = phoneFill ? Math.max(0, (vh - H * s) / 2 + 12) : safeTop;
   const centerY = topEdge + (H * s) / 2;
-
-
-
 
   document.documentElement.style.setProperty('--device-scale', s);
   document.documentElement.style.setProperty('--device-left', centerX + 'px');
@@ -2167,12 +2151,24 @@ if ('showDirectoryPicker' in window) {
     try { localStorage.setItem(FILL_SCREEN_KEY, fillScreen ? '1' : '0'); } catch (_) {}
     fitScale();
   });
-  const hapticSupported = typeof navigator.vibrate === 'function';
+  const HAPTIC_KEY = 'r47-haptic';
   const hapticInput = document.getElementById('theme-haptic');
-  if (!hapticSupported && hapticInput) {
-    hapticInput.closest('label')?.setAttribute('hidden', '');
+  const hapticSupported = typeof navigator.vibrate === 'function';
+  let hapticEnabled = true;
+  if (hapticSupported && hapticInput) {
+    try {
+      const stored = localStorage.getItem(HAPTIC_KEY);
+      if (stored !== null) hapticEnabled = stored === '1';
+    } catch (_) {}
+    hapticInput.checked = hapticEnabled;
+    hapticInput.addEventListener('change', () => {
+      hapticEnabled = hapticInput.checked;
+      try { localStorage.setItem(HAPTIC_KEY, hapticEnabled ? '1' : '0'); } catch (_) {}
+    });
+  } else {
+    hapticEnabled = false;
+    if (hapticInput) hapticInput.closest('label')?.setAttribute('hidden', '');
   }
-
   function buildThemeGrid(target) {
     const current = target === 'lcd' ? currentLcdTheme : currentKeysTheme;
     themeTitle.textContent = target === 'lcd' ? 'Choose an LCD theme' : 'Choose a keys theme';
