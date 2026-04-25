@@ -6,7 +6,7 @@
 
 // Single source of truth for the web release. assemble-web.sh stamps
 // this into dist/sw.js (VERSION) and dist/index.html (softwareVersion).
-const WEB_VERSION = '4.11v2';
+const WEB_VERSION = '4.11v3';
 
 
 
