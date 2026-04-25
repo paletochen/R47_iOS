@@ -454,6 +454,7 @@ function fitScale() {
   const safeTop    = phoneFill ? 0 : (phoneLikePortrait ? Math.max(0, rawSafeTop - 5 * (vw / W)) : rawSafeTop);
   const safeBottom = phoneFill ? 0 : getSafeAreaInset('bottom');
   const safeH = Math.max(1, vh - safeTop - safeBottom);
+  const topMargin = phoneFill ? 0 : forcedTopGap;
 
   const fitW = (phoneLikePortrait ? vw : safeW) / W;
   const fitH = safeH / H;
@@ -462,7 +463,8 @@ function fitScale() {
   // Fill screen: center vertically in the full viewport.
   // Safe mode: pin the top edge at safeTop.
   const centerX = phoneLikePortrait ? (vw / 2) : (safeLeft + safeW / 2);
-  const topEdge = phoneFill ? Math.max(0, (vh - H * s) / 2 + 12) : safeTop;
+  //const topEdge = phoneFill ? Math.max(0, (vh - H * s) / 2 + 12) : safeTop;
+  const topEdge = phoneFill ? Math.max(0, (vh - H * s) / 2 + 12) : (safeTop + topMargin + (safeH - H * s));
   const centerY = topEdge + (H * s) / 2;
 
   document.documentElement.style.setProperty('--device-scale', s);
